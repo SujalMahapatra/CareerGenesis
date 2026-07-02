@@ -1,6 +1,126 @@
+/* Fonts: Bricolage Grotesque (display) + Manrope (body) + JetBrains Mono (mono) */
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: #08080b;
+  color: #e6e6ea;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family:
+    \"Manrope\",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    \"Segoe UI\",
+    Roboto,
+    sans-serif;
+  font-feature-settings: \"ss01\", \"cv01\", \"cv11\";
+}
+
+code,
+.font-mono {
+  font-family:
+    \"JetBrains Mono\", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+}
+
+.font-display {
+  font-family: \"Bricolage Grotesque\", \"Manrope\", sans-serif;
+  letter-spacing: -0.02em;
+}
+
+@layer base {
+  :root {
+    --background: 240 10% 4%;
+    --foreground: 240 6% 92%;
+    --card: 240 10% 6%;
+    --card-foreground: 240 6% 92%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 240 6% 92%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 12%;
+    --secondary-foreground: 240 6% 92%;
+    --muted: 240 6% 12%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 189 94% 43%;
+    --accent-foreground: 240 10% 4%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 16%;
+    --input: 240 6% 14%;
+    --ring: 262 83% 58%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 240 10% 4%;
+    --foreground: 240 6% 92%;
+    --card: 240 10% 6%;
+    --card-foreground: 240 6% 92%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 240 6% 92%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 6% 12%;
+    --secondary-foreground: 240 6% 92%;
+    --muted: 240 6% 12%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 189 94% 43%;
+    --accent-foreground: 240 10% 4%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 6% 16%;
+    --input: 240 6% 14%;
+    --ring: 262 83% 58%;
+  }
+}
+
 @import "tailwindcss";
 
 body {
   margin: 0;
+  background: #020617;
+  color: white;
   font-family: Inter, sans-serif;
+}
+
+::selection {
+  background: rgba(124, 58, 237, 0.35);
+  color: #fff;
+}
+
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2a2a35, #14141a);
+  border-radius: 8px;
+  border: 2px solid #0a0a0f;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #3a3a48, #1a1a22);
+}
+
+@layer base {
+  [data-debug-wrapper=\"true\"] {
+    display: contents !important;
+  }
 }

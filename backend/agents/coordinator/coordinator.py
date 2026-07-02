@@ -9,10 +9,16 @@ agent (Resume Agent, Skill Gap Agent, Roadmap Agent, or Interview Agent).
 It is built to be clean, typed, and future-ready for Google ADK (Agent Development Kit) integration.
 """
 
+import logging
 import os
 from enum import Enum
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+
+ 
+logger = logging.getLogger(__name__)
+load_dotenv()
 
 # Graceful import check for Google GenAI SDK
 try:
@@ -81,11 +87,14 @@ class CoordinatorAgent:
         """
         self.model_name = model_name
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
+        
         self._client = None
 
         if HAS_GENAI and self.api_key:
             # Initialize modern google-genai Client
             self._client = genai.Client(api_key=self.api_key)
+        
+        
 
     def _route_by_rules(self, query: str) -> RoutingDecision:
         """
@@ -149,6 +158,7 @@ class CoordinatorAgent:
         Returns:
             RoutingDecision schema with target agent, reasoning, and metadata.
         """
+        
         if self._client:
             try:
                 system_instruction = (
@@ -160,7 +170,13 @@ class CoordinatorAgent:
                     "3. 'roadmap': For designing personalized learning curricula, timelines, study guides, or resource sheets.\n"
                     "4. 'interview': For conducting mock interviews (technical/behavioral), coding exercises, or evaluating answers.\n"
                     "5. 'general': For generic questions, chat greetings, or career advice that doesn't fit the above.\n\n"
-                    "Identify and extract key entities where applicable: 'job_title', 'skills_mentioned', 'timeline_weeks'."
+                    "Return ONLY valid JSON with this exact structure:\n"
+                    "{\n"
+                    '  "target_agent": "resume|skill_gap|roadmap|interview|general",\n'
+                    '  "reasoning": "string",\n'
+                    '  "confidence": 0.95,\n'
+                    '  "extracted_entities": {}\n'
+                    "}"
                 )
 
                 response = self._client.models.generate_content(
@@ -169,16 +185,17 @@ class CoordinatorAgent:
                     config=types.GenerateContentConfig(
                         system_instruction=system_instruction,
                         response_mime_type="application/json",
-                        response_schema=RoutingDecision,
                         temperature=0.1,
                     )
                 )
 
                 if response.text:
                     return RoutingDecision.model_validate_json(response.text)
+                
+           
             except Exception as e:
                 # Log execution error internally and proceed to rule-based fallback
-                pass
+                logger.exception("Coordinator Gemini routing failed")
 
         # Fallback if no LLM config or in case of SDK errors
         return self._route_by_rules(query)
