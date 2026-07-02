@@ -1,5 +1,5 @@
 """
-FastAPI Main Application for CareerPilot-AI.
+FastAPI Main Application for CareerGenesis.
 
 This module exposes the core specialized agent functionalities as clean, type-safe REST API endpoints.
 It uses FastAPI dependency injection and incorporates proper error handling.
@@ -28,8 +28,8 @@ from backend.agents.interview_agent.interview_agent import (
 )
 
 app = FastAPI(
-    title="CareerPilot-AI API",
-    description="FastAPI service for the multi-agent career platform CareerPilot-AI.",
+    title="CareerGenesis API",
+    description="FastAPI service for the multi-agent career platform CareerGenesis.",
     version="1.0.0",
 )
 
@@ -103,7 +103,7 @@ async def health_check():
     """
     return {
         "status": "healthy",
-        "service": "CareerPilot-AI API"
+        "service": "CareerGenesis API"
     }
 
 @app.post("/api/coordinator/route", response_model=RoutingDecision)
@@ -235,7 +235,7 @@ async def compile_interview_report(
     """
     try:
         logger.info(f"Compiling interview session report for session ID: {request.session.session_id}")
-        return agent.compile_session_report(request.session)
+        return await agent.compile_session_report(request.session)
     except Exception as e:
         logger.error(f"Error in interview report compilation: {e}")
         raise HTTPException(

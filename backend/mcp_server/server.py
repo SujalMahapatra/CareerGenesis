@@ -1,9 +1,9 @@
 """
-Model Context Protocol (MCP) Server for CareerPilot-AI.
+Model Context Protocol (MCP) Server for CareerGenesis.
 
 This module sets up a FastMCP server exposing tools from the specialized agents
 (Resume Agent, Skill Gap Agent, Roadmap Agent, and Interview Agent). This enables
-external LLMs or systems using MCP to leverage the core functionalities of the CareerPilot-AI platform.
+external LLMs or systems using MCP to leverage the core functionalities of the CareerGenesis platform.
 
 Designed to be run using standard input/output (stdio) transport.
 """
@@ -38,7 +38,7 @@ interview_agent = InterviewAgent()
 
 if HAS_MCP:
     # Instantiate FastMCP server
-    mcp = FastMCP("CareerPilot-AI Server")
+    mcp = FastMCP("CareerGenesis Server")
 
     # =====================================================================
     # Tool Registrations
@@ -142,7 +142,7 @@ else:
         def run(self):
             print(f"[{self.name}] Mock server running. Install 'mcp' to enable real Model Context Protocol.")
 
-    mcp = MockFastMCP("CareerPilot-AI Server Fallback")
+    mcp = MockFastMCP("CareerGenesis Server Fallback")
 
 
 # =====================================================================

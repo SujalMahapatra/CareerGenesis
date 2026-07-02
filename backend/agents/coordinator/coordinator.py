@@ -1,5 +1,5 @@
 """
-Coordinator Agent Module for CareerPilot-AI.
+Coordinator Agent Module for CareerGenesis.
 
 This module contains the CoordinatorAgent class, which acts as the entry point
 and orchestrator of the multi-agent career platform. It analyzes user queries,
@@ -65,7 +65,7 @@ class RoutingDecision(BaseModel):
 
 class CoordinatorAgent:
     """
-    Coordinator Agent representing the brain of the CareerPilot-AI platform.
+    Coordinator Agent representing the brain of the CareerGenesis platform.
     
     Responsible for analyzing user intent and orchestrating downstream agents.
     It can run standalone using standard Google GenAI client or as an ADK-wrapped agent node.
@@ -152,7 +152,7 @@ class CoordinatorAgent:
         if self._client:
             try:
                 system_instruction = (
-                    "You are the central Coordinator Agent for CareerPilot-AI.\n"
+                    "You are the central Coordinator Agent for CareerGenesis.\n"
                     "Your job is to analyze the user's career query and decide which specialist agent to route it to.\n\n"
                     "The routing options are:\n"
                     "1. 'resume': For resume uploading, tailoring, optimization, bullet editing, or career profile formatting.\n"
@@ -203,7 +203,7 @@ class CoordinatorAgent:
             name="coordinator_agent",
             model=self.model_name,
             instruction=(
-                "You are the central Coordinator Agent for CareerPilot-AI. "
+                "You are the central Coordinator Agent for CareerGenesis. "
                 "Analyze user requests, route them to appropriate specialist nodes, and "
                 "always output a structured JSON schema detailing routing target and reasoning."
             ),

@@ -1,5 +1,5 @@
 """
-Pydantic Schemas for CareerPilot-AI API.
+Pydantic Schemas for CareerGenesis API.
 
 This module defines the shared request and response models used by the API endpoints.
 It imports and re-exposes response models from the specialized agents for unified access.

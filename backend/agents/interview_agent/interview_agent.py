@@ -1,18 +1,29 @@
 """
-Interview Agent Module for CareerPilot-AI.
+Interview Agent Module for CareerGenesis.
 
 This module contains the InterviewAgent class along with Pydantic schemas for
 interview sessions and feedback. The InterviewAgent is responsible for generating
 tailored mock interview questions, grading candidate answers, scoring responses,
 and producing comprehensive feedback reports.
 
+When a GEMINI_API_KEY is available the agent delegates to Gemini 2.5 Flash for
+rich, AI-powered question generation, answer evaluation, and session report
+compilation.  If the key is absent or any call fails, deterministic rule-based
+fallbacks are used transparently.
+
 Compatible with Google ADK framework, designed to support WebSocket turn-based loops
 and Model Context Protocol (MCP) registrations.
 """
 
+import logging
 import os
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
+
+load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 # Graceful import check for Google GenAI SDK
 try:
@@ -108,6 +119,38 @@ class InterviewSession(BaseModel):
     is_completed: bool = Field(False, description="Flag indicating whether all questions have been graded")
 
 
+# -----------  Gemini session-report response schema  -----------
+
+class GeminiSessionReport(BaseModel):
+    """Structured response schema for Gemini-powered session report generation."""
+
+    overall_score: float = Field(
+        ...,
+        description="Weighted overall session score out of 100",
+        ge=0.0,
+        le=100.0,
+    )
+    coaching_summary: str = Field(
+        ...,
+        description=(
+            "Detailed coaching summary covering communication style, technical accuracy, "
+            "depth of explanation, and personalised preparation advice"
+        ),
+    )
+    strongest_skills: List[str] = Field(
+        default_factory=list,
+        description="Skills the candidate demonstrated most confidently",
+    )
+    weakest_skills: List[str] = Field(
+        default_factory=list,
+        description="Skills with the largest gaps or weakest performance",
+    )
+    next_learning_steps: List[str] = Field(
+        default_factory=list,
+        description="Concrete, actionable next steps the candidate should take to improve",
+    )
+
+
 # =====================================================================
 # 2. InterviewAgent Class
 # =====================================================================
@@ -116,24 +159,42 @@ class InterviewAgent:
     """
     Interview Agent specialized in conducting interactive mock interviews,
     generating relevant questions, evaluating answers turn-by-turn, and scoring sessions.
+
+    When a ``GEMINI_API_KEY`` environment variable (or an explicit *api_key*
+    argument) is available **and** the ``google-genai`` SDK is installed, every
+    public method delegates to **Gemini 2.5 Flash** via structured-output calls.
+    Otherwise the agent falls back transparently to deterministic, rule-based
+    heuristics.
     
     Designed to hook into WebSocket loops and function under Google ADK.
     """
 
-    def __init__(self, model_name: str = "gemini-2.5-pro", api_key: Optional[str] = None):
+    def __init__(self, model_name: str = "gemini-2.5-flash", api_key: Optional[str] = None):
         """
         Initializes the InterviewAgent.
 
         Args:
-            model_name: The Gemini model name to use. Defaults to gemini-2.5-pro (highly recommended for grading).
+            model_name: The Gemini model name to use. Defaults to gemini-2.5-flash.
             api_key: Optional Gemini API key. Defaults to environment variable.
         """
         self.model_name = model_name
-        self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         self._client = None
 
         if HAS_GENAI and self.api_key:
             self._client = genai.Client(api_key=self.api_key)
+            logger.info("Gemini client initialized (model=%s)", self.model_name)
+        else:
+            logger.info(
+                "Gemini client NOT available (HAS_GENAI=%s, api_key_set=%s). "
+                "Using local fallback logic.",
+                HAS_GENAI,
+                bool(self.api_key),
+            )
+
+    # -----------------------------------------------------------------
+    # Fallback helpers  (original logic preserved)
+    # -----------------------------------------------------------------
 
     def _generate_fallback_questions(
         self, 
@@ -242,6 +303,10 @@ class InterviewAgent:
             model_answer=f"An ideal answer would systematically cover {', '.join(question.expected_points)}. Example: 'Regarding {question.target_skill}, we apply STAR formats, structuring the performance metrics and scaling indicators.'"
         )
 
+    # -----------------------------------------------------------------
+    # Gemini-powered question generation
+    # -----------------------------------------------------------------
+
     async def generate_questions(
         self, 
         resume_skills: List[str], 
@@ -249,7 +314,8 @@ class InterviewAgent:
         limit: int = 5
     ) -> List[InterviewQuestion]:
         """
-        Generates a custom list of behavioral and technical questions tailored to skills.
+        Generates a custom list of behavioral, technical, and system-design
+        questions tailored to the candidate's skills and target role.
         
         Designed to be registered as an MCP tool: 'interview_agent_generate_questions'.
 
@@ -265,12 +331,22 @@ class InterviewAgent:
             try:
                 system_instruction = (
                     "You are a Principal Engineering Manager and Talent Assessor.\n"
-                    f"Generate exactly {limit} interview questions for a candidate applying to a {target_role} position.\n\n"
+                    f"Generate exactly {limit} diverse interview questions for a candidate applying "
+                    f"to a {target_role} position.\n\n"
+                    "Question diversity requirements:\n"
+                    "- Include at least 1 behavioral question assessing soft skills (leadership, "
+                    "conflict resolution, teamwork, communication)\n"
+                    "- Include at least 1 system design question testing architecture skills "
+                    "(scalability, reliability, trade-offs)\n"
+                    "- Fill remaining slots with technical coding/framework questions that directly "
+                    "test implementation knowledge\n"
+                    "- Vary difficulty across easy, medium, and hard\n\n"
                     "Adhere to the InterviewQuestion schema requirements:\n"
                     "1. Tailor the topics based on these candidate skills: " + ", ".join(resume_skills) + ".\n"
-                    "2. Balance the set: include at least 1 behavioral question, 1 system design, and the rest technical coding/framework questions.\n"
-                    "3. For each question, specify a unique question_id (sequential integers starting at 1), type, target_skill, difficulty, "
-                    "and a list of expected key points ('expected_points') the candidate's answer should ideally hit."
+                    "2. For each question, specify a unique question_id (sequential integers starting at 1), "
+                    "question_type ('technical', 'behavioral', or 'system_design'), target_skill, difficulty, "
+                    "and a list of expected key points ('expected_points') the candidate's answer should ideally hit.\n"
+                    "3. Make questions specific and role-relevant — avoid generic prompts."
                 )
 
                 class QuestionList(BaseModel):
@@ -278,7 +354,7 @@ class InterviewAgent:
 
                 response = self._client.models.generate_content(
                     model=self.model_name,
-                    contents=f"Generate {limit} questions for the role: {target_role}",
+                    contents=f"Generate {limit} interview questions for the role: {target_role}",
                     config=types.GenerateContentConfig(
                         system_instruction=system_instruction,
                         response_mime_type="application/json",
@@ -289,13 +365,24 @@ class InterviewAgent:
 
                 if response.text:
                     data = QuestionList.model_validate_json(response.text)
+                    logger.info(
+                        "Gemini question generation succeeded — role=%s, count=%d",
+                        target_role,
+                        len(data.questions),
+                    )
                     return data.questions
             except Exception:
-                # Log execution error internally and drop back to local rules
-                pass
+                logger.exception(
+                    "Gemini question generation failed for role=%s, falling back to local questions",
+                    target_role,
+                )
 
         # Fallback to local questions list
         return self._generate_fallback_questions(resume_skills, target_role, limit)
+
+    # -----------------------------------------------------------------
+    # Gemini-powered answer evaluation
+    # -----------------------------------------------------------------
 
     async def evaluate_answer(
         self, 
@@ -346,17 +433,147 @@ class InterviewAgent:
                 )
 
                 if response.text:
-                    return InterviewFeedback.model_validate_json(response.text)
+                    feedback = InterviewFeedback.model_validate_json(response.text)
+                    logger.info(
+                        "Gemini answer evaluation succeeded — question_id=%d, score=%d/10",
+                        feedback.question_id,
+                        feedback.score,
+                    )
+                    return feedback
             except Exception:
-                # Log execution error internally and drop back to local rules
-                pass
+                logger.exception(
+                    "Gemini answer evaluation failed for question_id=%d, falling back to local evaluation",
+                    question.question_id,
+                )
 
         # Fallback to local regex-based score metrics
         return self._evaluate_answer_locally(question, user_answer)
 
-    def compile_session_report(self, session: InterviewSession) -> InterviewSession:
+    # -----------------------------------------------------------------
+    # Gemini-powered session report generation
+    # -----------------------------------------------------------------
+
+    async def generate_session_report_with_gemini(
+        self, session: InterviewSession
+    ) -> InterviewSession:
+        """
+        Uses Gemini to analyse all interview feedback and produce a rich
+        coaching report for the candidate.
+
+        This method:
+        - Analyses all per-question feedback holistically
+        - Produces an overall score (0–100)
+        - Writes a detailed coaching summary
+        - Identifies strongest and weakest skills
+        - Recommends concrete next learning steps
+
+        Args:
+            session: The populated InterviewSession containing questions,
+                     answers, and per-question feedback.
+
+        Returns:
+            The same InterviewSession updated with ``overall_score``,
+            ``overall_feedback``, and ``is_completed`` set to True.
+
+        Raises:
+            Exception: Re-raises any Gemini or validation error so that the
+                       caller can decide how to fall back.
+        """
+        system_instruction = (
+            "You are an elite Interview Coach and Career Strategist.\n\n"
+            "Analyze the full set of interview question feedback provided below and "
+            "produce a comprehensive session report.\n\n"
+            "## Report Requirements\n"
+            "1. **Overall Score (0-100)**: Weighted average reflecting correctness, "
+            "communication clarity, depth of technical detail, and breadth of coverage.\n"
+            "2. **Coaching Summary**: A detailed, multi-paragraph coaching narrative "
+            "covering communication style, technical accuracy, depth of explanation, "
+            "areas of excellence, and personalised preparation advice.\n"
+            "3. **Strongest Skills**: List the 2-5 skills where the candidate showed "
+            "the most confidence and accuracy.\n"
+            "4. **Weakest Skills**: List the 2-5 skills with the largest gaps or "
+            "weakest performance.\n"
+            "5. **Next Learning Steps**: Provide 3-6 concrete, actionable steps the "
+            "candidate should take to improve (e.g., specific courses, practice topics, "
+            "mock-interview focus areas).\n\n"
+            "Be encouraging yet honest. Ground every observation in evidence from the "
+            "feedback data."
+        )
+
+        # Build a detailed prompt from session data
+        feedback_lines: List[str] = []
+        for qid, fb in session.feedback_by_question.items():
+            # Find the matching question for richer context
+            q_text = ""
+            q_skill = ""
+            for q in session.questions:
+                if q.question_id == qid:
+                    q_text = q.question_text
+                    q_skill = q.target_skill
+                    break
+
+            feedback_lines.append(
+                f"--- Question {qid} ---\n"
+                f"Question: {q_text}\n"
+                f"Target Skill: {q_skill}\n"
+                f"Score: {fb.score}/10\n"
+                f"Strengths: {'; '.join(fb.strengths)}\n"
+                f"Weaknesses: {'; '.join(fb.weaknesses)}\n"
+                f"Suggested Improvements: {'; '.join(fb.suggested_improvements)}\n"
+            )
+
+        prompt = (
+            f"Candidate: {session.candidate_name}\n"
+            f"Target Role: {session.target_role}\n"
+            f"Total Questions Answered: {len(session.feedback_by_question)}\n\n"
+            "FEEDBACK DATA:\n" + "\n".join(feedback_lines)
+        )
+
+        response = self._client.models.generate_content(
+            model=self.model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=GeminiSessionReport,
+                temperature=0.3,
+            ),
+        )
+
+        report = GeminiSessionReport.model_validate_json(response.text)
+
+        # Compose rich overall_feedback from Gemini report fields
+        strongest_str = ", ".join(report.strongest_skills) if report.strongest_skills else "N/A"
+        weakest_str = ", ".join(report.weakest_skills) if report.weakest_skills else "N/A"
+        steps_str = "\n".join(f"  • {step}" for step in report.next_learning_steps) if report.next_learning_steps else "  • Continue practising."
+
+        session.overall_score = report.overall_score
+        session.overall_feedback = (
+            f"{report.coaching_summary}\n\n"
+            f"Strongest Skills: {strongest_str}\n"
+            f"Weakest Skills: {weakest_str}\n\n"
+            f"Recommended Next Steps:\n{steps_str}"
+        )
+        session.is_completed = True
+
+        logger.info(
+            "Gemini session report generation succeeded — session=%s, score=%.1f",
+            session.session_id,
+            report.overall_score,
+        )
+
+        return session
+
+    # -----------------------------------------------------------------
+    # Session report compilation (public API)
+    # -----------------------------------------------------------------
+
+    async def compile_session_report(self, session: InterviewSession) -> InterviewSession:
         """
         Aggregates individual question scores and compiles the final interview feedback report.
+
+        Uses Gemini for rich coaching analysis when available, with automatic
+        fallback to the local rule-based implementation.
 
         Args:
             session: The populated InterviewSession.
@@ -369,6 +586,19 @@ class InterviewAgent:
             session.overall_feedback = "No questions were answered or evaluated in this session."
             session.is_completed = True
             return session
+
+        # Attempt Gemini-powered report first
+        if self._client:
+            try:
+                return await self.generate_session_report_with_gemini(session)
+            except Exception:
+                logger.exception(
+                    "Gemini session report generation failed for session=%s, "
+                    "falling back to local report compilation",
+                    session.session_id,
+                )
+
+        # ---- Local fallback (original logic preserved) ----
 
         # Calculate average score (scaled to 100)
         total_score = sum(feed.score for feed in session.feedback_by_question.values())
@@ -392,6 +622,10 @@ class InterviewAgent:
         session.is_completed = True
         return session
 
+    # -----------------------------------------------------------------
+    # ADK integration
+    # -----------------------------------------------------------------
+
     def to_adk_agent(self) -> Any:
         """
         Wraps and registers this InterviewAgent instance configuration as a Google ADK Agent.
@@ -412,7 +646,7 @@ class InterviewAgent:
             name="interview_agent",
             model=self.model_name,
             instruction=(
-                "You are the specialist Interview Agent for CareerPilot-AI. "
+                "You are the specialist Interview Agent for CareerGenesis. "
                 "Your role is to formulate technical and behavioral mock interview questions, "
                 "grade candidate answers turn-by-turn, compile coaching feedback, and "
                 "produce aggregated scoring reports in JSON."
