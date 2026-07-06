@@ -2,6 +2,7 @@ import React from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import BackgroundFX from "../components/BackgroundFX";
+import CopilotWidget from "./CopilotWidget";
 
 export const PageShell = ({ children, variant = "app", testId }) => {
   return (
@@ -12,6 +13,7 @@ export const PageShell = ({ children, variant = "app", testId }) => {
         {children}
       </main>
       <Footer />
+      <CopilotWidget />
     </div>
   );
 };
