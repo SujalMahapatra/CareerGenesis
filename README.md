@@ -94,10 +94,6 @@ Add project screenshots here.
 
 
 
-## Team
-
-CoderVibes
-
 ## Repository Setup
 git clone https://github.com/SujalMahapatra/CareerGenesis.git
 cd CareerGenesis
