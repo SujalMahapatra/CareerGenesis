@@ -16,11 +16,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("careerpilot_api")
 
 # Core specialized agent imports
-from backend.agents.coordinator.coordinator import CoordinatorAgent, RoutingDecision
-from backend.agents.resume_agent.resume_agent import ResumeAgent, ResumeAnalysis
-from backend.agents.skill_gap_agent.skill_gap_agent import SkillGapAgent, SkillGapAnalysis
-from backend.agents.roadmap_agent.roadmap_agent import RoadmapAgent, RoadmapAnalysis
-from backend.agents.interview_agent.interview_agent import (
+from agents.coordinator.coordinator import CoordinatorAgent, RoutingDecision
+from agents.resume_agent.resume_agent import ResumeAgent, ResumeAnalysis
+from agents.skill_gap_agent.skill_gap_agent import SkillGapAgent, SkillGapAnalysis
+from agents.roadmap_agent.roadmap_agent import RoadmapAgent, RoadmapAnalysis
+from agents.interview_agent.interview_agent import (
     InterviewAgent,
     InterviewQuestion,
     InterviewFeedback,
