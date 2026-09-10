@@ -69,8 +69,6 @@ Agent Orchestration
 
 ## Screenshots
 
-Add project screenshots here.
-
 <img width="1888" height="882" alt="Screenshot 2026-07-07 014133" src="https://github.com/user-attachments/assets/f23dc16a-82f2-49ec-a78b-7233bc1b7862" />
 <img width="1918" height="887" alt="Screenshot 2026-07-07 014053" src="https://github.com/user-attachments/assets/94bbc808-2e5b-4eee-baa3-161267759856" />
 <img width="1903" height="908" alt="Screenshot 2026-07-07 014021" src="https://github.com/user-attachments/assets/367191ca-04e0-494d-8761-50ad27cdddea" />
@@ -91,7 +89,6 @@ Add project screenshots here.
 <img width="1143" height="867" alt="Screenshot 2026-07-07 014539" src="https://github.com/user-attachments/assets/eb35ac50-e90e-4419-abb2-e6d1ec1f4186" />
 <img width="1881" height="876" alt="Screenshot 2026-07-07 014434" src="https://github.com/user-attachments/assets/3fde8df3-a5f1-4aa9-9422-3f72aa99af06" />
 <img width="1898" height="905" alt="Screenshot 2026-07-07 014242" src="https://github.com/user-attachments/assets/cb36ad60-c7cd-40ab-ad1e-5a36412168d5" />
-
 
 
 ## Repository Setup
