@@ -9,8 +9,8 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 # Re-expose existing agent response/data models for unified schema usage
-from backend.agents.coordinator.coordinator import RoutingDecision
-from backend.agents.resume_agent.resume_agent import (
+from agents.coordinator.coordinator import RoutingDecision
+from agents.resume_agent.resume_agent import (
     ResumeAnalysis,
     ResumeProfile,
     ContactInfo,
@@ -20,18 +20,18 @@ from backend.agents.resume_agent.resume_agent import (
     Suggestion,
     ATSMetrics,
 )
-from backend.agents.skill_gap_agent.skill_gap_agent import (
+from agents.skill_gap_agent.skill_gap_agent import (
     SkillGapAnalysis,
     MatchingSkill,
     MissingSkill,
     PartialMatch,
 )
-from backend.agents.roadmap_agent.roadmap_agent import (
+from agents.roadmap_agent.roadmap_agent import (
     RoadmapAnalysis,
     RoadmapPhase,
     LearningResource,
 )
-from backend.agents.interview_agent.interview_agent import (
+from agents.interview_agent.interview_agent import (
     InterviewQuestion,
     InterviewFeedback,
     InterviewSession,

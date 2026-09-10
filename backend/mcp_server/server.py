@@ -23,10 +23,10 @@ except ImportError:
     HAS_MCP = False
 
 # Import core specialized agents
-from backend.agents.resume_agent.resume_agent import ResumeAgent
-from backend.agents.skill_gap_agent.skill_gap_agent import SkillGapAgent
-from backend.agents.roadmap_agent.roadmap_agent import RoadmapAgent
-from backend.agents.interview_agent.interview_agent import InterviewAgent
+from agents.resume_agent.resume_agent import ResumeAgent
+from agents.skill_gap_agent.skill_gap_agent import SkillGapAgent
+from agents.roadmap_agent.roadmap_agent import RoadmapAgent
+from agents.interview_agent.interview_agent import InterviewAgent
 
 
 # Initialize agents
