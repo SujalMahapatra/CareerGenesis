@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("careerpilot_api")
+logger = logging.getLogger("careergenesis_api")
 
 # Core specialized agent imports
 from agents.coordinator.coordinator import CoordinatorAgent, RoutingDecision
