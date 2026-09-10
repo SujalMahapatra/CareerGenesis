@@ -96,6 +96,16 @@ class InterviewReportRequest(BaseModel):
 
 # --- Endpoints ---
 
+@app.get("/", status_code=status.HTTP_200_OK)
+async def root():
+    return {
+        "service": "CareerGenesis API",
+        "status": "online",
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/health"
+    }
+
 @app.get("/health", status_code=status.HTTP_200_OK)
 async def health_check():
     """
