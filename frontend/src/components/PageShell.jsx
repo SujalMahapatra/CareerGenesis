@@ -1,7 +1,7 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import BackgroundFX from "../components/BackgroundFx";
-import CopilotWidget from "./CopilotWidget";
+import BackgroundFX from "./components/BackgroundFX";
+import CopilotWidget from "./components/CopilotWidget";
 
 export const PageShell = ({ children, variant = "app", testId }) => {
   return (

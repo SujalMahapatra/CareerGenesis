@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import BackgroundFX from "../components/BackgroundFX";
+import BackgroundFX from "./components/BackgroundFX";
 import { features } from "../lib/mockData";
 import {
   ArrowUpRight,
