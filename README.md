@@ -93,10 +93,13 @@ Agent Orchestration
 
 ## Repository Setup
 git clone https://github.com/SujalMahapatra/CareerGenesis.git
+
 cd CareerGenesis
+
 Backend
 pip install -r requirements.txt
 uvicorn backend.api.main:app --reload
+
 Frontend
 cd frontend
 npm install
