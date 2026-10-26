@@ -96,11 +96,16 @@ git clone https://github.com/SujalMahapatra/CareerGenesis.git
 
 cd CareerGenesis
 
-Backend
+Backend:
+
 pip install -r requirements.txt
+
 uvicorn backend.api.main:app --reload
 
-Frontend
+Frontend:
+
 cd frontend
+
 npm install
+
 npm run dev
